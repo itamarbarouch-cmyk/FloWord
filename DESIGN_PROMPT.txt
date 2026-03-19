@@ -1,0 +1,170 @@
+FloWord — Design prompt: user flow and screens
+==============================================
+
+Product
+-------
+FloWord is a two-player online association game. One player creates a room and gets a 6-letter code; the other joins with that code. Both players then go through four steps: pick secret words, reveal them, try twice to type the same association word. Match = win (celebration); no match after two attempts = game over with an encouraging quote. The app should feel simple, clear, and mobile-friendly (touch targets, readable type, one main card per screen).
+
+
+Global chrome (in-game only)
+----------------------------
+- App title: "FloWord" (top of every screen).
+- When in a game (after create/join): small secondary line "Room XXXXXX" (6-letter code).
+- When in a game: a subtle "Leave room" link/button at the bottom (secondary style).
+- Error messages: red/inline style; can appear below forms or at top of game area.
+
+
+Screen 1: Landing
+-----------------
+- Title: FloWord
+- Tagline: "Online association game for two"
+- One card/section containing:
+  - Primary button: "Create room"
+  - Divider text: "or"
+  - Text input: placeholder "Enter room code", max 6 characters (display uppercase)
+  - Secondary button: "Join room" (disabled when input is empty)
+- If there is an error (e.g. room not found): show error text below the form in red.
+- Loading state: while creating or joining, primary/secondary button can show "Creating…" and be disabled.
+
+
+Screen 2a: Waiting for player 2 (host only)
+-------------------------------------------
+- Title: FloWord
+- Card with:
+  - Label: "Room code"
+  - Large, prominent 6-letter code (e.g. monospace, letter-spaced)
+  - Hint: "Share this code with your friend. When they join, the game will start."
+  - Ghost/secondary button: "Cancel"
+- No "Room XXXXXX" badge yet (or same as in-game).
+
+
+Screen 2b: Connecting / waiting for room (joiner only)
+------------------------------------------------------
+- Title: FloWord
+- Loading line: "Waiting for room…"
+- (Brief state until room data loads.)
+
+
+Screen 2c: Connecting to room (generic)
+---------------------------------------
+- Title: FloWord
+- Loading line: "Connecting to room…"
+- Shown whenever view is game but room data is not loaded yet.
+
+
+Screen 3: Step 1 — Baseline (secret words)
+------------------------------------------
+- Title: FloWord | Room XXXXXX | Leave room
+- One card with:
+  - Step badge: "Step 1 — Baseline"
+  - Variant A (not submitted yet): 
+    - Label: "Both choose a random word"
+    - Hint: "Only you see this until both have submitted."
+    - Text input: placeholder "Secret word"
+    - Button: "Submit" (disabled when input empty)
+  - Variant B (this player already submitted):
+    - Single line: "Waiting for other player"
+- Same card layout for both players; only the content (form vs waiting) differs per state.
+
+
+Screen 4: Step 1 done — Reveal baseline words
+----------------------------------------------
+- Title: FloWord | Room XXXXXX | Leave room
+- Card with:
+  - Step badge: "Step 1 done — Baseline words"
+  - Label: "Secret words"
+  - Two words displayed prominently, separated by a dot, e.g. "apple · orange"
+  - Hint: "Find the same association between them."
+  - Primary button: "Step 2 — First association"
+
+
+Screen 5: Step 2 — First association
+------------------------------------
+- Title: FloWord | Room XXXXXX | Leave room
+- Card with:
+  - Step badge: "Step 2 — First association"
+  - Label: "Find the same association for the baseline words"
+  - Prompt words (same style as secret words, slightly smaller): e.g. "apple · orange"
+  - Variant A (not submitted yet):
+    - Label: "Type your association word"
+    - Text input: placeholder "Association word"
+    - Button: "Submit" (disabled when input empty)
+  - Variant B (this player already submitted):
+    - "Waiting for other player"
+- Both players see the same prompt words; only form vs waiting differs.
+
+
+Screen 6: Step 3 — Second association
+-------------------------------------
+- Same layout as Screen 5, but:
+  - Step badge: "Step 3 — Second association"
+  - Label: "Find the same association for the words you chose in Step 2"
+  - Prompt words: the two words from Step 2 (e.g. "fruit · food")
+  - Optional: below the prompt words, show one encouraging quote in italics, e.g. "If at first you don't succeed, try try again."
+  - Same two variants: form (input + Submit) vs "Waiting for other player"
+
+
+Screen 7: Step 4 — Result (win)
+-------------------------------
+- Full-screen celebration: confetti (or equivalent) overlay; non-interactive, can fade after a few seconds.
+- Card (success style: e.g. green tint / success border):
+  - Step badge: "Step 4 — Result"
+  - Title: "You matched!"
+  - Subtitle: "Association: [the matched word]"
+  - Primary button: "Play again"
+- Leave room still available at bottom.
+
+
+Screen 8: Step 4 — Result (game over)
+--------------------------------------
+- No confetti.
+- Card (neutral/game-over style: e.g. grey/muted border):
+  - Step badge: "Step 4 — Result"
+  - Title: "Game over"
+  - Subtitle: "Better luck next time."
+  - Line showing both answers: "P1: [word] · P2: [word]"
+  - Optional: one encouraging quote in italics (same style as Screen 6).
+  - Primary button: "Play again"
+- Leave room still available at bottom.
+
+
+Flow summary (for wireframes / flow diagram)
+--------------------------------------------
+1. Landing → Create room → Screen 2a (host)   OR   Landing → Join room (code) → Screen 2b then into game.
+2. Screen 2a: host waits until joiner joins → both go to Screen 3.
+3. Screen 3 (Step 1): both submit secret word → Screen 4.
+4. Screen 4: either player taps "Step 2 — First association" → Screen 5.
+5. Screen 5 (Step 2): both submit association → if match → Screen 7 (win). If no match → Screen 6.
+6. Screen 6 (Step 3): both submit association → if match → Screen 7 (win). If no match → Screen 8 (game over).
+7. Screen 7 or 8: "Play again" → back to Screen 3 (new round, new secret words).
+8. "Leave room" (any time in game) → back to Landing.
+
+
+Copy reference
+--------------
+- App name: FloWord
+- Tagline: Online association game for two
+- Create room / Join room / Cancel / Leave room
+- Room code: Share this code with your friend. When they join, the game will start.
+- Step 1 — Baseline | Both choose a random word | Only you see this until both have submitted. | Secret word | Submit
+- Step 1 done — Baseline words | Secret words | Find the same association between them. | Step 2 — First association
+- Step 2 — First association | Find the same association for the baseline words | Type your association word | Association word | Submit
+- Step 3 — Second association | Find the same association for the words you chose in Step 2 | (same form + optional quote)
+- Waiting for other player
+- Step 4 — Result | You matched! | Association: [word] | Play again
+- Game over | Better luck next time. | P1: [word] · P2: [word] | Play again
+- Connecting to room… | Waiting for room… | Creating…
+
+
+Encouraging quotes (sample; show one at a time, italic)
+------------------------------------------------------
+- If at first you don't succeed, try try again.
+- Every expert was once a beginner.
+- You're one step closer than before.
+- The best view comes after the hardest climb.
+- Keep going — you've got this.
+- Mistakes are proof that you're trying.
+- Progress, not perfection.
+- One more try could be the one.
+- Stay curious. Next round might be yours.
+- It's not over until you win.

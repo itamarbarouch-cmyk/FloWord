@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isInRoom(room) {
+      return request.auth != null && (
+        request.auth.uid == room.data.player1Id ||
+        request.auth.uid == room.data.player2Id
+      );
+    }
+    function roomPhase(roomCode) {
+      return get(/databases/$(database)/documents/rooms/$(roomCode)).data.phase;
+    }
+    function isRevealed(roomCode) {
+      return roomPhase(roomCode) in ['reveal', 'association', 'result'];
+    }
+
+    match /rooms/{roomCode} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.player1Id ||
+        request.auth.uid == resource.data.player2Id
+      );
+      allow create: if request.auth != null
+        && request.resource.data.player1Id == request.auth.uid
+        && request.resource.data.phase == 'secret';
+      allow update: if isInRoom(get(/databases/$(database)/documents/rooms/$(roomCode)));
+      allow delete: if false;
+    }
+
+    match /rooms/{roomCode}/words/{player} {
+      allow read: if request.auth != null && (
+        (player == 'p1' && request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomCode)).data.player1Id)
+        || (player == 'p2' && request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomCode)).data.player2Id)
+        || (isRevealed(roomCode) && isInRoom(get(/databases/$(database)/documents/rooms/$(roomCode))))
+      );
+      allow write: if request.auth != null && (
+        (player == 'p1' && request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomCode)).data.player1Id)
+        || (player == 'p2' && request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomCode)).data.player2Id)
+      );
+    }
+  }
+}
