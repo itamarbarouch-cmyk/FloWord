@@ -39,6 +39,7 @@ function App() {
   const [mySecret, setMySecret] = useState('')
   const [myGuess, setMyGuess] = useState('')
   const [roomCodeCopied, setRoomCodeCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const isPlayer1 = user && room && room.player1Id === user.uid
   const isPlayer2 = user && room && room.player2Id === user.uid
@@ -56,6 +57,15 @@ function App() {
       setAuthReady(true)
     })
     return () => unsub()
+  }, [])
+
+  // Prefill join input from ?room=CODE in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const room = params.get('room')
+    if (room && typeof room === 'string') {
+      setJoinInput(room.trim().toUpperCase().slice(0, 6))
+    }
   }, [])
 
   const handleCreateRoom = useCallback(async () => {
@@ -232,8 +242,30 @@ function App() {
               {roomCodeCopied && <span className="floword-roomcode-copied">Copied!</span>}
             </button>
           </div>
+          <div className="floword-roomcode-share">
+            <p className="floword-roomcode-share-label">Share link</p>
+            <p className="floword-roomcode-share-url" title={`${window.location.origin}${window.location.pathname}?room=${roomCode}`}>
+              {`${window.location.origin}${window.location.pathname}?room=${roomCode}`}
+            </p>
+            <button
+              type="button"
+              className="floword-roomcode-copy floword-roomcode-copy-link"
+              onClick={() => {
+                const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`
+                navigator.clipboard.writeText(url).then(() => {
+                  setLinkCopied(true)
+                  setTimeout(() => setLinkCopied(false), 2000)
+                })
+              }}
+              aria-label="Copy share link"
+              title={linkCopied ? 'Copied!' : 'Copy link'}
+            >
+              <Copy size={20} aria-hidden />
+              {linkCopied ? <span className="floword-roomcode-copied">Copied!</span> : 'Copy Link'}
+            </button>
+          </div>
           <p className="floword-roomcode-hint">
-            Share this code with your friend. When they join, the game will start.
+            Share this code or link with your friend. When they join, the game will start.
           </p>
           <button type="button" className="floword-roomcode-cancel" onClick={leaveRoom}>
             Cancel
