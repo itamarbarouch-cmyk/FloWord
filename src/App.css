@@ -394,7 +394,7 @@
   box-shadow: var(--shadow);
 }
 
-/* Step 1 — Secret Word card */
+/* Step 1 — First Word card (secret phase) */
 .floword-secret-card {
   width: 100%;
   max-width: 400px;

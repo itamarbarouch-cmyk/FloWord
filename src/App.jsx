@@ -298,7 +298,7 @@ function App() {
       {phase === PHASE.SECRET && !(isPlayer1 && room.player1SecretDone) && !(isPlayer2 && room.player2SecretDone) && (
         <section className="floword-secret-card">
           <Lock className="floword-secret-icon" size={40} strokeWidth={1.5} aria-hidden />
-          <h2 className="floword-secret-title">Secret Word</h2>
+          <h2 className="floword-secret-title">First Word</h2>
           <p className="floword-secret-subtitle">Enter a baseline word to start the game</p>
           <form onSubmit={handleSecretSubmit} className="floword-secret-form">
               <input
@@ -311,7 +311,7 @@ function App() {
                 autoFocus
               />
               <button type="submit" className="floword-secret-btn" disabled={!mySecret.trim()}>
-                Submit Secret Word
+                Submit First Word
               </button>
             </form>
         </section>
