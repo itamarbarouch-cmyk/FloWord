@@ -26,7 +26,7 @@ export const STRINGS = {
     'footer.navLabel': 'Site links',
     'footer.howToPlay': 'HOW TO PLAY',
     'footer.about': 'ABOUT',
-    'footer.privacy': 'PRIVACY',
+    'footer.privacy': 'PRIVACY POLICY',
 
     'info.modal.close': 'Close',
     'info.how.title': 'How to play',
@@ -166,7 +166,7 @@ export const STRINGS = {
     'footer.navLabel': 'קישורים',
     'footer.howToPlay': 'איך משחקים',
     'footer.about': 'אודות',
-    'footer.privacy': 'פרטיות',
+    'footer.privacy': 'מדיניות פרטיות',
 
     'info.modal.close': 'סגירה',
     'info.how.title': 'איך משחקים',
