@@ -1,16 +1,18 @@
 import React from 'react'
+import { FlowordMark } from './FlowordMark'
 
-export function ScreenWrapper({ title, subtitle, children, showLogo }) {
+export function ScreenWrapper({ children, showLogo, brandLabel }) {
   return (
     <div className={`floword${showLogo ? ' floword-landing-page' : ''}`}>
       {showLogo && (
-        <div className="floword-logo">
-          <span className="floword-logo-flo">FLO</span>
-          <span className="floword-logo-word">WORD</span>
+        <div className="floword-top-brand">
+          <FlowordMark size={36} className="floword-mark--bar" />
+          <span className="floword-wordmark" aria-hidden="true">
+            FLOWORD
+          </span>
+          {brandLabel && <span className="sr-only">{brandLabel}</span>}
         </div>
       )}
-      {!showLogo && title && <h1 className="floword-title">{title}</h1>}
-      {!showLogo && subtitle && <p className="floword-tagline">{subtitle}</p>}
       {children}
     </div>
   )

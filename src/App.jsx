@@ -9,12 +9,22 @@ import {
   startRound,
   submitAssociation,
   playAgain as roomPlayAgain,
+  JoinRoomError,
 } from './room'
 import { Lock, Eye, Zap, Copy, Sparkles, SendHorizontal, LogOut } from 'lucide-react'
 import { Celebration } from './Celebration'
 import { LandingScreen } from './components/LandingScreen'
 import { WaitingForPlayer } from './components/WaitingForPlayer'
+import { LanguageSwitcher } from './components/LanguageSwitcher'
+import { FlowordHeaderMark } from './components/FlowordMark'
+import { useI18n } from './i18n/I18nContext'
 import './App.css'
+
+const JOIN_ERROR_I18N = {
+  [JoinRoomError.NOT_FOUND]: 'errors.roomNotFound',
+  [JoinRoomError.FULL]: 'errors.roomFull',
+  [JoinRoomError.ALREADY_CREATOR]: 'errors.alreadyCreator',
+}
 
 const PHASE = {
   SECRET: 'secret',
@@ -25,7 +35,18 @@ const PHASE = {
 
 const REVEALED_PHASES = [PHASE.REVEAL, PHASE.ASSOCIATION, PHASE.RESULT]
 
+/** Same trimmed text → show once; different text but still a game match → "p1/p2". */
+function formatWinAssociationWords(p1, p2) {
+  const a = (p1 ?? '').trim()
+  const b = (p2 ?? '').trim()
+  if (a === b) return a || b
+  if (!a) return b
+  if (!b) return a
+  return `${a}/${b}`
+}
+
 function App() {
+  const { t } = useI18n()
   const [authReady, setAuthReady] = useState(false)
   const [user, setUser] = useState(null)
   const [view, setView] = useState('landing') // 'landing' | 'create' | 'join' | 'game'
@@ -82,7 +103,7 @@ function App() {
       setRoomCode(code)
       setView('game')
     } catch (e) {
-      setJoinError(e?.message || 'Failed to create room')
+      setJoinError(e?.message === 'Could not sign in' ? 'errors.signIn' : 'errors.createRoom')
       setView('landing')
     } finally {
       setIsCreating(false)
@@ -104,14 +125,16 @@ function App() {
       setUser(currentUser ?? auth.currentUser)
       const result = await joinRoom(code, uid)
       if (result.error) {
-        setJoinError(result.error)
+        setJoinError(JOIN_ERROR_I18N[result.error] || 'errors.joinRoom')
         return
       }
       setRoomCode(result.roomCode)
       setJoinInput('')
       setView('game')
     } catch (err) {
-      setJoinError(err?.message || 'Failed to join room')
+      setJoinError(
+        err?.message === 'Could not sign in' ? 'errors.signIn' : 'errors.joinRoom'
+      )
     } finally {
       setIsCreating(false)
     }
@@ -140,7 +163,7 @@ function App() {
       await setSecretWord(roomCode, isPlayer1 ? 'p1' : 'p2', mySecret)
       setMySecret('')
     } catch (err) {
-      setJoinError(err?.message)
+      setJoinError('errors.generic')
     }
   }
 
@@ -148,7 +171,7 @@ function App() {
     try {
       await startRound(roomCode)
     } catch (err) {
-      setJoinError(err.message)
+      setJoinError('errors.generic')
     }
   }
 
@@ -159,7 +182,7 @@ function App() {
       await submitAssociation(roomCode, isPlayer1 ? 'p1' : 'p2', myGuess)
       setMyGuess('')
     } catch (err) {
-      setJoinError(err?.message)
+      setJoinError('errors.generic')
     }
   }
 
@@ -167,7 +190,7 @@ function App() {
     try {
       await roomPlayAgain(roomCode)
     } catch (err) {
-      setJoinError(err.message)
+      setJoinError('errors.generic')
     }
   }
 
@@ -184,112 +207,127 @@ function App() {
 
   if (!authReady) {
     return (
-      <div className="floword">
-        <h1 className="floword-title">FloWord</h1>
-        <p className="floword-loading">Loading…</p>
-      </div>
+      <>
+        <LanguageSwitcher />
+        <div className="floword">
+          <FlowordHeaderMark size={40} />
+          <p className="floword-loading">{t('app.loading')}</p>
+        </div>
+      </>
     )
   }
 
   if (view === 'landing') {
     return (
-      <LandingScreen
-        onCreateRoom={handleCreateRoom}
-        onJoinRoom={handleJoinRoom}
-        inputCode={joinInput}
-        setInputCode={(value) => {
-          setJoinInput(value)
-          setJoinError('')
-        }}
-        error={joinError}
-        isCreating={isCreating}
-      />
+      <>
+        <LanguageSwitcher />
+        <LandingScreen
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
+          inputCode={joinInput}
+          setInputCode={(value) => {
+            setJoinInput(value)
+            setJoinError('')
+          }}
+          errorKey={joinError || null}
+          isCreating={isCreating}
+        />
+      </>
     )
   }
 
   if (view === 'game' && !room) {
     return (
-      <div className="floword">
-        <h1 className="floword-title">FloWord</h1>
-        <p className="floword-loading">Connecting to room…</p>
-      </div>
+      <>
+        <LanguageSwitcher />
+        <div className="floword">
+          <FlowordHeaderMark size={40} />
+          <p className="floword-loading">{t('app.connectingRoom')}</p>
+        </div>
+      </>
     )
   }
 
   if (view === 'game' && room && !room.player2Id && isPlayer1) {
     return (
-      <div className="floword">
-        <h1 className="floword-title">FloWord</h1>
-        <section className="floword-roomcode-card">
-          <h2 className="floword-roomcode-heading">Room code</h2>
-          <div className="floword-roomcode-row">
-            <p className="floword-roomcode-value" aria-label={`Room code: ${roomCode}`}>
-              {roomCode}
-            </p>
-            <button
-              type="button"
-              className="floword-roomcode-copy"
-              onClick={() => {
-                navigator.clipboard.writeText(roomCode).then(() => {
-                  setRoomCodeCopied(true)
-                  setTimeout(() => setRoomCodeCopied(false), 2000)
-                })
-              }}
-              aria-label="Copy room code"
-              title={roomCodeCopied ? 'Copied!' : 'Copy code'}
-            >
-              <Copy size={20} aria-hidden />
-              {roomCodeCopied && <span className="floword-roomcode-copied">Copied!</span>}
+      <>
+        <LanguageSwitcher />
+        <div className="floword">
+          <FlowordHeaderMark size={40} />
+          <section className="floword-roomcode-card">
+            <h2 className="floword-roomcode-heading">{t('roomCode.heading')}</h2>
+            <div className="floword-roomcode-row">
+              <p className="floword-roomcode-value" aria-label={`${t('roomCode.heading')}: ${roomCode}`}>
+                {roomCode}
+              </p>
+              <button
+                type="button"
+                className="floword-roomcode-copy"
+                onClick={() => {
+                  navigator.clipboard.writeText(roomCode).then(() => {
+                    setRoomCodeCopied(true)
+                    setTimeout(() => setRoomCodeCopied(false), 2000)
+                  })
+                }}
+                aria-label={t('roomCode.copyCodeAria')}
+                title={roomCodeCopied ? t('roomCode.copied') : t('roomCode.copyCodeTitle')}
+              >
+                <Copy size={20} aria-hidden />
+                {roomCodeCopied && <span className="floword-roomcode-copied">{t('roomCode.copied')}</span>}
+              </button>
+            </div>
+            <div className="floword-roomcode-share">
+              <p className="floword-roomcode-share-label">{t('roomCode.shareLink')}</p>
+              <p className="floword-roomcode-share-url" title={`${window.location.origin}${window.location.pathname}?room=${roomCode}`}>
+                {`${window.location.origin}${window.location.pathname}?room=${roomCode}`}
+              </p>
+              <button
+                type="button"
+                className="floword-roomcode-copy floword-roomcode-copy-link"
+                onClick={() => {
+                  const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`
+                  navigator.clipboard.writeText(url).then(() => {
+                    setLinkCopied(true)
+                    setTimeout(() => setLinkCopied(false), 2000)
+                  })
+                }}
+                aria-label={t('roomCode.copyLinkAria')}
+                title={linkCopied ? t('roomCode.copied') : t('roomCode.copyLink')}
+              >
+                <Copy size={20} aria-hidden />
+                {linkCopied ? <span className="floword-roomcode-copied">{t('roomCode.copied')}</span> : t('roomCode.copyLink')}
+              </button>
+            </div>
+            <p className="floword-roomcode-hint">{t('roomCode.hint')}</p>
+            <button type="button" className="floword-roomcode-cancel" onClick={leaveRoom}>
+              {t('roomCode.cancel')}
             </button>
-          </div>
-          <div className="floword-roomcode-share">
-            <p className="floword-roomcode-share-label">Share link</p>
-            <p className="floword-roomcode-share-url" title={`${window.location.origin}${window.location.pathname}?room=${roomCode}`}>
-              {`${window.location.origin}${window.location.pathname}?room=${roomCode}`}
-            </p>
-            <button
-              type="button"
-              className="floword-roomcode-copy floword-roomcode-copy-link"
-              onClick={() => {
-                const url = `${window.location.origin}${window.location.pathname}?room=${roomCode}`
-                navigator.clipboard.writeText(url).then(() => {
-                  setLinkCopied(true)
-                  setTimeout(() => setLinkCopied(false), 2000)
-                })
-              }}
-              aria-label="Copy share link"
-              title={linkCopied ? 'Copied!' : 'Copy link'}
-            >
-              <Copy size={20} aria-hidden />
-              {linkCopied ? <span className="floword-roomcode-copied">Copied!</span> : 'Copy Link'}
-            </button>
-          </div>
-          <p className="floword-roomcode-hint">
-            Share this code or link with your friend. When they join, the game will start.
-          </p>
-          <button type="button" className="floword-roomcode-cancel" onClick={leaveRoom}>
-            Cancel
-          </button>
-        </section>
-      </div>
+          </section>
+        </div>
+      </>
     )
   }
 
   if (view === 'game' && room && !room.player2Id && isPlayer2) {
     return (
-      <div className="floword">
-        <h1 className="floword-title">FloWord</h1>
-        <p className="floword-loading">Waiting for room…</p>
-      </div>
+      <>
+        <LanguageSwitcher />
+        <div className="floword">
+          <FlowordHeaderMark size={40} />
+          <p className="floword-loading">{t('app.waitingRoom')}</p>
+        </div>
+      </>
     )
   }
 
   return (
-    <div className={`floword ${phase === PHASE.ASSOCIATION || phase === PHASE.RESULT ? 'floword-association-bg' : ''}`}>
-      <h1 className="floword-title">FloWord</h1>
-      <p className="floword-room-badge">Room {roomCode}</p>
+    <>
+      <LanguageSwitcher />
+      <div className={`floword ${phase === PHASE.ASSOCIATION || phase === PHASE.RESULT ? 'floword-association-bg' : ''}`}>
+      <FlowordHeaderMark size={40} />
+      <p className="floword-room-badge">{t('app.roomBadge', { code: roomCode })}</p>
 
-      {joinError && <p className="floword-error floword-error-inline">{joinError}</p>}
+      {joinError && <p className="floword-error floword-error-inline">{t(joinError)}</p>}
 
       {phase === PHASE.SECRET && ((isPlayer1 && room.player1SecretDone) || (isPlayer2 && room.player2SecretDone)) && (
         <WaitingForPlayer />
@@ -298,20 +336,20 @@ function App() {
       {phase === PHASE.SECRET && !(isPlayer1 && room.player1SecretDone) && !(isPlayer2 && room.player2SecretDone) && (
         <section className="floword-secret-card">
           <Lock className="floword-secret-icon" size={40} strokeWidth={1.5} aria-hidden />
-          <h2 className="floword-secret-title">First Word</h2>
-          <p className="floword-secret-subtitle">Enter a baseline word to start the game</p>
+          <h2 className="floword-secret-title">{t('secret.title')}</h2>
+          <p className="floword-secret-subtitle">{t('secret.subtitle')}</p>
           <form onSubmit={handleSecretSubmit} className="floword-secret-form">
               <input
                 type="text"
                 className="floword-secret-input"
-                placeholder="Type your word..."
+                placeholder={t('secret.placeholder')}
                 value={mySecret}
                 onChange={(e) => setMySecret(e.target.value)}
                 autoComplete="off"
                 autoFocus
               />
               <button type="submit" className="floword-secret-btn" disabled={!mySecret.trim()}>
-                Submit First Word
+                {t('secret.submit')}
               </button>
             </form>
         </section>
@@ -320,20 +358,20 @@ function App() {
       {phase === PHASE.REVEAL && (
         <section className="floword-reveal-card">
           <Eye className="floword-reveal-icon" size={40} strokeWidth={1.5} aria-hidden />
-          <h2 className="floword-reveal-title">Words Revealed</h2>
-          <p className="floword-reveal-subtitle">Here are your baseline words</p>
+          <h2 className="floword-reveal-title">{t('reveal.title')}</h2>
+          <p className="floword-reveal-subtitle">{t('reveal.subtitle')}</p>
           <div className="floword-reveal-rows">
             <div className="floword-reveal-row">
-              <span className="floword-reveal-label">PLAYER 1</span>
+              <span className="floword-reveal-label">{t('reveal.player1')}</span>
               <span className="floword-reveal-word">{player1Word || '—'}</span>
             </div>
             <div className="floword-reveal-row">
-              <span className="floword-reveal-label">PLAYER 2</span>
+              <span className="floword-reveal-label">{t('reveal.player2')}</span>
               <span className="floword-reveal-word">{player2Word || '—'}</span>
             </div>
           </div>
           <button type="button" className="floword-reveal-cta" onClick={handleStartRound}>
-            Ready for Association
+            {t('reveal.cta')}
             <Zap className="floword-reveal-cta-icon" size={20} aria-hidden />
           </button>
         </section>
@@ -346,18 +384,18 @@ function App() {
       {phase === PHASE.ASSOCIATION && !(isPlayer1 && room.player1Guess !== '') && !(isPlayer2 && room.player2Guess !== '') && (
         <section className="floword-association-card">
           <h2 className="floword-association-title">
-            {room.attempt === 1 ? 'First Attempt' : 'Second Attempt - Last Chance'}
+            {room.attempt === 1 ? t('assoc.attempt1') : t('assoc.attempt2')}
           </h2>
           <p className="floword-association-words">
             {promptWord1 || '—'} · {promptWord2 || '—'}
           </p>
           <form onSubmit={handleAssociationSubmit} className="floword-association-form">
-            <p className="floword-association-prompt">Type your association word</p>
+            <p className="floword-association-prompt">{t('assoc.prompt')}</p>
             <div className="floword-association-input-wrap">
               <input
                 type="text"
                 className="floword-association-input"
-                placeholder="Association word"
+                placeholder={t('assoc.placeholder')}
                 value={myGuess}
                 onChange={(e) => setMyGuess(e.target.value)}
                 autoComplete="off"
@@ -366,7 +404,7 @@ function App() {
               <Sparkles className="floword-association-input-icon" size={20} aria-hidden />
             </div>
             <button type="submit" className="floword-association-btn" disabled={!myGuess.trim()}>
-              Submit
+              {t('assoc.submit')}
               <SendHorizontal size={20} className="floword-association-btn-icon" aria-hidden />
             </button>
           </form>
@@ -377,29 +415,41 @@ function App() {
         <>
           {room.result === 'win' && <Celebration />}
           <section className="floword-result-card">
-            <p className="floword-result-badge">Result</p>
+            <p className="floword-result-badge">{t('result.badge')}</p>
             {room.result === 'win' ? (
               <>
-                <p className="floword-result-title floword-win-title">You matched!</p>
-                <p className="floword-result-word">Association: {room.player1Guess}</p>
-                {room.lastQuote && (
-                  <p className="floword-result-quote">{room.lastQuote}</p>
+                <p className="floword-result-title floword-win-title">{t('result.winTitle')}</p>
+                <p className="floword-result-word">
+                  {t('result.associationLabel', {
+                    word: formatWinAssociationWords(room.player1Guess, room.player2Guess),
+                  })}
+                </p>
+                {(room.lastQuoteKey || room.lastQuote) && (
+                  <p className="floword-result-quote">
+                    {room.lastQuoteKey
+                      ? t(`quotes.${room.lastQuoteKey}`)
+                      : room.lastQuote}
+                  </p>
                 )}
               </>
             ) : (
               <>
-                <p className="floword-gameover-title">Game over</p>
-                <p className="floword-result-sub">Better luck next time.</p>
+                <p className="floword-result-title floword-gameover-title">{t('result.lossTitle')}</p>
+                <p className="floword-result-sub">{t('result.lossSub')}</p>
                 <p className="floword-result-answers">
-                  P1: {room.player1Guess} · P2: {room.player2Guess}
+                  {t('result.answers', { p1: room.player1Guess, p2: room.player2Guess })}
                 </p>
-                {room.lastQuote && (
-                  <p className="floword-result-quote">{room.lastQuote}</p>
+                {(room.lastQuoteKey || room.lastQuote) && (
+                  <p className="floword-result-quote">
+                    {room.lastQuoteKey
+                      ? t(`quotes.${room.lastQuoteKey}`)
+                      : room.lastQuote}
+                  </p>
                 )}
               </>
             )}
             <button type="button" className="floword-result-play-btn" onClick={handlePlayAgain}>
-              Play again
+              {t('result.playAgain')}
             </button>
           </section>
         </>
@@ -408,10 +458,11 @@ function App() {
       {view === 'game' && room && (
         <button type="button" className="floword-leave-btn" onClick={leaveRoom}>
           <LogOut size={18} aria-hidden />
-          Leave room
+          {t('leaveRoom')}
         </button>
       )}
     </div>
+    </>
   )
 }
 

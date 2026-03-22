@@ -1,12 +1,124 @@
 /* FloWord — simple, mobile-friendly layout */
 
+/* Always top-right of the viewport — not mirrored in RTL */
+.floword-lang-switcher {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(12px, env(safe-area-inset-right, 0px));
+  left: auto;
+  z-index: 1100;
+}
+
+.floword-lang-trigger-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.floword-lang-trigger-pill:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.floword-lang-trigger-flag {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.floword-lang-code {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a3a3a3;
+}
+
+.floword-lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: auto;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.floword-lang-menu-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  min-width: 8.5rem;
+}
+
+.floword-lang-option-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+}
+
+.floword-lang-option-pill:hover {
+  background: #f1f5f9;
+}
+
+.floword-lang-option-pill-active {
+  border-color: #007652;
+  background: #e8f5f0;
+}
+
+.floword-lang-option-flag {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.floword-lang-option-code {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #525252;
+}
+
 .floword {
-  padding: 20px 16px 32px;
+  padding: 52px 16px 32px;
   min-height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   box-sizing: border-box;
+}
+
+/* Landing: own vertical rhythm + full viewport (overrides generic .floword padding) */
+.floword.floword-landing-page {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100svh;
+  min-height: 100dvh;
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  justify-content: center;
+  align-items: center;
 }
 
 .floword-title {
@@ -41,11 +153,11 @@
 }
 
 .floword-btn .floword-btn-icon:not(.floword-btn-icon-start) {
-  margin-left: 8px;
+  margin-inline-start: 8px;
 }
 
 .floword-btn .floword-btn-icon-start {
-  margin-right: 8px;
+  margin-inline-end: 8px;
 }
 
 .floword-divider {
@@ -55,33 +167,78 @@
   margin: 0;
 }
 
-/* Landing page (design) */
+/* Landing page (design) — base; height/padding from .floword.floword-landing-page */
 .floword-landing-page {
   position: relative;
-  justify-content: center;
-  padding-top: 56px;
 }
 
-.floword-logo {
+.sr-only {
   position: absolute;
-  top: 24px;
-  left: 24px;
-  font-weight: 700;
-  font-size: 1.25rem;
-  letter-spacing: 0.02em;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.floword-logo-flo {
-  color: #0a0a0a;
+/* Top bar brand: icon + FLOWORD — always physical top-left */
+.floword-top-brand {
+  position: absolute;
+  top: 20px;
+  left: max(16px, env(safe-area-inset-left, 0px));
+  right: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  direction: ltr;
+  unicode-bidi: isolate;
+  z-index: 2;
 }
 
-.floword-logo-word {
-  color: #059669;
+.floword-mark--bar {
+  flex-shrink: 0;
+  display: block;
+}
+
+.floword-wordmark {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: #007652;
+}
+
+.floword-header-mark {
+  margin: 0 0 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.floword-mark {
+  display: block;
+}
+
+.floword-mark--hero {
+  margin: 0 auto;
+}
+
+.floword-landing-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.floword-landing-subtitle-line {
+  margin: 0;
 }
 
 .floword-landing-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   padding: 32px 28px;
   background: #fff;
   border-radius: 24px;
@@ -90,7 +247,8 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 24px;
+  gap: 28px;
+  box-sizing: border-box;
 }
 
 .floword-landing-card-title {
@@ -110,7 +268,7 @@
 .floword-landing-card .floword-btn-create {
   width: 100%;
   padding: 16px 24px;
-  background: #059669 !important;
+  background: #007652 !important;
   color: #fff !important;
   border: none;
   border-radius: 9999px;
@@ -121,15 +279,15 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 118, 82, 0.35);
   transition: filter 0.2s, box-shadow 0.2s;
 }
 
 .floword-landing-card .floword-btn-create:hover:not(:disabled) {
-  background: #047857 !important;
+  background: #005c40 !important;
   color: #fff !important;
   filter: brightness(1.05);
-  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.45);
+  box-shadow: 0 6px 20px rgba(0, 118, 82, 0.42);
 }
 
 .floword-landing-card .floword-btn-create:disabled {
@@ -149,6 +307,7 @@
   align-items: center;
   gap: 16px;
   width: 100%;
+  margin-block: 4px;
 }
 
 .floword-landing-divider-line {
@@ -167,7 +326,7 @@
 .floword-landing-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -192,7 +351,7 @@
 
 .floword-landing-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #059669;
+  box-shadow: 0 0 0 2px #007652;
 }
 
 .floword-landing-card .floword-btn-join {
@@ -201,7 +360,7 @@
   background: #262626 !important;
   color: #fff !important;
   border: none;
-  border-radius: 12px;
+  border-radius: 9999px;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
@@ -225,6 +384,173 @@
 
 .floword-landing-error {
   margin: 0;
+  margin-top: 4px;
+}
+
+.floword-landing-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 10px;
+  margin-top: auto;
+  padding-top: clamp(16px, 4vh, 28px);
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  max-width: 22rem;
+}
+
+.floword-landing-footer-link {
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #a3a3a3;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.floword-landing-footer-link:hover {
+  color: #525252;
+}
+
+.floword-landing-footer-dot {
+  color: #d4d4d4;
+  font-size: 0.65rem;
+  user-select: none;
+}
+
+/* Info modals (how to play, about, privacy) */
+.floword-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@media (min-width: 520px) {
+  .floword-modal-backdrop {
+    align-items: center;
+    padding: 24px;
+  }
+}
+
+.floword-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: min(88dvh, 640px);
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 520px) {
+  .floword-modal {
+    border-radius: 20px;
+    max-height: min(82dvh, 720px);
+  }
+}
+
+.floword-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.floword-modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-align: start;
+  line-height: 1.25;
+}
+
+.floword-modal-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.floword-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.floword-modal-body {
+  padding: 16px 20px 24px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  text-align: start;
+  color: #334155;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.floword-modal-body p {
+  margin: 0 0 14px;
+}
+
+.floword-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.floword-modal-section {
+  margin-bottom: 20px;
+}
+
+.floword-modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.floword-modal-section-title {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #007652;
+  line-height: 1.3;
+}
+
+.floword-modal-list {
+  margin: 8px 0 0;
+  padding-inline-start: 1.2rem;
+}
+
+.floword-modal-list li {
+  margin-bottom: 8px;
+}
+
+.floword-modal-list li:last-child {
+  margin-bottom: 0;
+}
+
+.floword-modal-muted {
+  font-size: 0.88rem;
+  color: #64748b;
 }
 
 .floword-error {
@@ -723,7 +1049,8 @@
 .floword-association-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 16px 48px 16px 20px;
+  padding-block: 16px;
+  padding-inline: 20px 48px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
@@ -745,7 +1072,7 @@
 
 .floword-association-input-icon {
   position: absolute;
-  right: 16px;
+  inset-inline-end: 16px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
@@ -1136,8 +1463,75 @@
   opacity: 0.9;
 }
 
+/* Mobile: landing uses more viewport height + calmer bottom margin */
+@media (max-width: 600px) {
+  .floword.floword-landing-page {
+    min-height: 100dvh;
+    min-height: 100svh;
+    padding-top: calc(68px + env(safe-area-inset-top, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  .floword-landing-card {
+    max-width: none;
+    flex: 0 1 auto;
+    min-height: min(82dvh, 640px);
+    max-height: calc(
+      100dvh - 72px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    justify-content: center;
+    gap: clamp(28px, 7vw, 40px);
+    padding: clamp(28px, 6vh, 40px) clamp(20px, 5vw, 28px);
+    border-radius: 28px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .floword-landing-card-title {
+    font-size: clamp(1.65rem, 5.5vw, 1.85rem);
+  }
+
+  .floword-landing-card-subtitle {
+    font-size: 1rem;
+    line-height: 1.45;
+    max-width: 22rem;
+  }
+
+  .floword-landing-divider {
+    margin-block: clamp(4px, 1.5vh, 12px);
+  }
+
+  .floword-landing-form {
+    gap: clamp(16px, 3.5vh, 22px);
+    margin-top: 2px;
+  }
+
+  .floword-landing-input {
+    min-height: 52px;
+    padding: 16px 20px;
+    border-radius: 14px;
+    font-size: 1.05rem;
+  }
+
+  .floword-landing-card .floword-btn-create,
+  .floword-landing-card .floword-btn-join {
+    min-height: 52px;
+    padding: 16px 24px;
+    border-radius: 14px;
+  }
+
+  .floword-landing-card .floword-btn-create {
+    border-radius: 9999px;
+  }
+}
+
 @media (max-width: 480px) {
-  .floword {
+  .floword:not(.floword-landing-page) {
     padding: 16px 12px 24px;
   }
 

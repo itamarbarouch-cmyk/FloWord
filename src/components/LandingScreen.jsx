@@ -1,26 +1,32 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Play, ArrowRight } from 'lucide-react'
 import { ScreenWrapper } from './ScreenWrapper'
+import { FlowordMark } from './FlowordMark'
+import { InfoModal } from './InfoModal'
+import { useI18n } from '../i18n/I18nContext'
 
 export function LandingScreen({
   onCreateRoom,
   onJoinRoom,
   inputCode,
   setInputCode,
-  error,
+  errorKey,
   isCreating,
 }) {
+  const { t } = useI18n()
+  const [infoPanel, setInfoPanel] = useState(null)
+
   return (
-    <ScreenWrapper
-      title="FloWord"
-      subtitle="Connect your minds. Find the same word."
-      showLogo
-    >
+    <ScreenWrapper showLogo brandLabel={t('app.title')}>
       <section className="floword-landing-card">
-        <h1 className="floword-landing-card-title">FloWord</h1>
-        <p className="floword-landing-card-subtitle">
-          Connect your minds. Find the same word.
-        </p>
+        <div className="floword-landing-hero">
+          <FlowordMark size={72} className="floword-mark--hero" />
+          <p className="floword-landing-card-subtitle floword-landing-subtitle-line">
+            {t('landing.subtitleLine1')}
+            <br />
+            {t('landing.subtitleLine2')}
+          </p>
+        </div>
 
         <button
           type="button"
@@ -29,12 +35,12 @@ export function LandingScreen({
           disabled={isCreating}
         >
           <Play size={20} className="floword-btn-icon" aria-hidden />
-          {isCreating ? 'Creating…' : 'Create Room'}
+          {isCreating ? t('landing.creating') : t('landing.createRoom')}
         </button>
 
         <div className="floword-landing-divider">
           <span className="floword-landing-divider-line" />
-          <span className="floword-landing-divider-text">OR JOIN</span>
+          <span className="floword-landing-divider-text">{t('landing.orJoin')}</span>
           <span className="floword-landing-divider-line" />
         </div>
 
@@ -42,7 +48,7 @@ export function LandingScreen({
           <input
             type="text"
             className="floword-landing-input"
-            placeholder="6-LETTER CODE"
+            placeholder={t('landing.enterCode')}
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value.toUpperCase())}
             maxLength={6}
@@ -53,13 +59,33 @@ export function LandingScreen({
             className="floword-btn floword-btn-join"
             disabled={!inputCode.trim()}
           >
-            Join Game
+            {t('landing.joinGame')}
             <ArrowRight size={20} className="floword-btn-icon" aria-hidden />
           </button>
         </form>
 
-        {error && <p className="floword-error floword-landing-error">{error}</p>}
+        {errorKey && <p className="floword-error floword-landing-error">{t(errorKey)}</p>}
       </section>
+
+      <nav className="floword-landing-footer" aria-label={t('footer.navLabel')}>
+        <button type="button" className="floword-landing-footer-link" onClick={() => setInfoPanel('how')}>
+          {t('footer.howToPlay')}
+        </button>
+        <span className="floword-landing-footer-dot" aria-hidden>
+          ·
+        </span>
+        <button type="button" className="floword-landing-footer-link" onClick={() => setInfoPanel('about')}>
+          {t('footer.about')}
+        </button>
+        <span className="floword-landing-footer-dot" aria-hidden>
+          ·
+        </span>
+        <button type="button" className="floword-landing-footer-link" onClick={() => setInfoPanel('privacy')}>
+          {t('footer.privacy')}
+        </button>
+      </nav>
+
+      <InfoModal type={infoPanel} onClose={() => setInfoPanel(null)} />
     </ScreenWrapper>
   )
 }

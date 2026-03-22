@@ -47,36 +47,23 @@ function levenshtein(a, b) {
   return dp[m][n]
 }
 
-const ENCOURAGING_QUOTES = [
-  'If at first you don\'t succeed, try try again.',
-  'Every expert was once a beginner.',
-  'You\'re one step closer than before.',
-  'The best view comes after the hardest climb.',
-  'Keep going — you\'ve got this.',
-  'Mistakes are proof that you\'re trying.',
-  'Progress, not perfection.',
-  'One more try could be the one.',
-  'Stay curious. Next round might be yours.',
-  'It\'s not over until you win.',
-]
+/** Quote keys — localized in UI via i18n (`quotes.${key}`) */
+const MOTIV_QUOTE_COUNT = 10
+const CELEBR_QUOTE_COUNT = 8
 
-const CELEBRATORY_QUOTES = [
-  'You did it! What a match.',
-  'Great minds think alike.',
-  'That\'s the spirit!',
-  'Perfect sync.',
-  'You two are on the same wavelength.',
-  'Boom! Nailed it.',
-  'Teamwork makes the dream work.',
-  'Unstoppable.',
-]
-
-function randomQuote() {
-  return ENCOURAGING_QUOTES[Math.floor(Math.random() * ENCOURAGING_QUOTES.length)]
+function randomMotivQuoteKey() {
+  return `motiv_${Math.floor(Math.random() * MOTIV_QUOTE_COUNT)}`
 }
 
-function randomCelebratoryQuote() {
-  return CELEBRATORY_QUOTES[Math.floor(Math.random() * CELEBRATORY_QUOTES.length)]
+function randomCelebrQuoteKey() {
+  return `celebr_${Math.floor(Math.random() * CELEBR_QUOTE_COUNT)}`
+}
+
+/** Stable codes for join errors (translate in UI) */
+export const JoinRoomError = {
+  NOT_FOUND: 'ROOM_NOT_FOUND',
+  FULL: 'ROOM_FULL',
+  ALREADY_CREATOR: 'ALREADY_CREATOR',
 }
 const CODE_LENGTH = 6
 
@@ -110,6 +97,7 @@ export async function createRoom(uid) {
     promptWord1: '',
     promptWord2: '',
     lastQuote: null,
+    lastQuoteKey: null,
     result: null,
     createdAt: serverTimestamp(),
   })
@@ -119,10 +107,10 @@ export async function createRoom(uid) {
 export async function joinRoom(roomCode, uid) {
   const ref = doc(db, 'rooms', roomCode.toUpperCase().trim())
   const snap = await getDoc(ref)
-  if (!snap.exists()) return { error: 'Room not found' }
+  if (!snap.exists()) return { error: JoinRoomError.NOT_FOUND }
   const data = snap.data()
-  if (data.player2Id) return { error: 'Room is full' }
-  if (data.player1Id === uid) return { error: 'You already created this room' }
+  if (data.player2Id) return { error: JoinRoomError.FULL }
+  if (data.player1Id === uid) return { error: JoinRoomError.ALREADY_CREATOR }
   await updateDoc(ref, { player2Id: uid })
   return { roomCode: ref.id }
 }
@@ -186,6 +174,7 @@ export async function startRound(roomCode) {
     promptWord1: word1,
     promptWord2: word2,
     lastQuote: null,
+    lastQuoteKey: null,
     result: null,
   })
 }
@@ -204,7 +193,8 @@ export async function submitAssociation(roomCode, player, guess) {
     await updateDoc(ref, {
       phase: 'result',
       result: 'win',
-      lastQuote: randomCelebratoryQuote(),
+      lastQuoteKey: randomCelebrQuoteKey(),
+      lastQuote: null,
     })
     return
   }
@@ -212,7 +202,8 @@ export async function submitAssociation(roomCode, player, guess) {
     await updateDoc(ref, {
       phase: 'result',
       result: 'loss',
-      lastQuote: randomQuote(),
+      lastQuoteKey: randomMotivQuoteKey(),
+      lastQuote: null,
     })
     return
   }
@@ -223,6 +214,7 @@ export async function submitAssociation(roomCode, player, guess) {
     player1Guess: '',
     player2Guess: '',
     lastQuote: null,
+    lastQuoteKey: null,
   })
 }
 
@@ -241,6 +233,7 @@ export async function playAgain(roomCode) {
     promptWord1: '',
     promptWord2: '',
     lastQuote: null,
+    lastQuoteKey: null,
     result: null,
   })
   batch.delete(p1Ref)
