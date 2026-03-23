@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { auth, ensureAnonymousAuth } from './firebase'
 import {
   createRoom,
@@ -35,6 +35,19 @@ const PHASE = {
 
 const REVEALED_PHASES = [PHASE.REVEAL, PHASE.ASSOCIATION, PHASE.RESULT]
 
+/** Room code from `?room=` — read once per page load (module init). */
+const ROOM_FROM_URL =
+  typeof window !== 'undefined'
+    ? (() => {
+        try {
+          const p = new URLSearchParams(window.location.search).get('room')
+          return p ? p.trim().toUpperCase().slice(0, 6) : ''
+        } catch {
+          return ''
+        }
+      })()
+    : ''
+
 /** Same trimmed text → show once; different text but still a game match → "p1/p2". */
 function formatWinAssociationWords(p1, p2) {
   const a = (p1 ?? '').trim()
@@ -49,18 +62,20 @@ function App() {
   const { t } = useI18n()
   const [authReady, setAuthReady] = useState(false)
   const [user, setUser] = useState(null)
-  const [view, setView] = useState('landing') // 'landing' | 'create' | 'join' | 'game'
+  const [view, setView] = useState(() => (ROOM_FROM_URL ? 'autoJoin' : 'landing'))
   const [roomCode, setRoomCode] = useState('')
   const [room, setRoom] = useState(null)
   const [word1, setWord1] = useState('')
   const [word2, setWord2] = useState('')
-  const [joinInput, setJoinInput] = useState('')
+  const [joinInput, setJoinInput] = useState(() => ROOM_FROM_URL)
   const [joinError, setJoinError] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [mySecret, setMySecret] = useState('')
   const [myGuess, setMyGuess] = useState('')
   const [roomCodeCopied, setRoomCodeCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+
+  const autoJoinGeneration = useRef(0)
 
   const isPlayer1 = user && room && room.player1Id === user.uid
   const isPlayer2 = user && room && room.player2Id === user.uid
@@ -80,14 +95,48 @@ function App() {
     return () => unsub()
   }, [])
 
-  // Prefill join input from ?room=CODE in URL
+  // Auto-join when URL contains ?room=CODE (after auth; skips landing on success)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const room = params.get('room')
-    if (room && typeof room === 'string') {
-      setJoinInput(room.trim().toUpperCase().slice(0, 6))
+    if (!authReady || !ROOM_FROM_URL) return
+    const gen = ++autoJoinGeneration.current
+    setJoinError('')
+    setIsCreating(true)
+    ;(async () => {
+      try {
+        const currentUser = await ensureAnonymousAuth()
+        const uid = currentUser?.uid ?? auth.currentUser?.uid
+        if (!uid) throw new Error('Could not sign in')
+        if (gen !== autoJoinGeneration.current) return
+        setUser(currentUser ?? auth.currentUser)
+        const result = await joinRoom(ROOM_FROM_URL, uid)
+        if (gen !== autoJoinGeneration.current) return
+        if (result.error) {
+          setJoinError(JOIN_ERROR_I18N[result.error] || 'errors.joinRoom')
+          setView('landing')
+          setJoinInput(ROOM_FROM_URL)
+          return
+        }
+        setRoomCode(result.roomCode)
+        setJoinInput('')
+        setView('game')
+        try {
+          window.history.replaceState({}, '', window.location.pathname)
+        } catch (_) {}
+      } catch (err) {
+        if (gen !== autoJoinGeneration.current) return
+        setJoinError(
+          err?.message === 'Could not sign in' ? 'errors.signIn' : 'errors.joinRoom'
+        )
+        setView('landing')
+        setJoinInput(ROOM_FROM_URL)
+      } finally {
+        if (gen === autoJoinGeneration.current) setIsCreating(false)
+      }
+    })()
+    return () => {
+      autoJoinGeneration.current += 1
     }
-  }, [])
+  }, [authReady])
 
   const handleCreateRoom = useCallback(async () => {
     setJoinError('')
@@ -211,7 +260,21 @@ function App() {
         <LanguageSwitcher />
         <div className="floword">
           <FlowordHeaderMark size={40} />
-          <p className="floword-loading">{t('app.loading')}</p>
+          <p className="floword-loading">
+            {ROOM_FROM_URL ? t('app.joiningRoom') : t('app.loading')}
+          </p>
+        </div>
+      </>
+    )
+  }
+
+  if (view === 'autoJoin') {
+    return (
+      <>
+        <LanguageSwitcher />
+        <div className="floword">
+          <FlowordHeaderMark size={40} />
+          <p className="floword-loading">{t('app.joiningRoom')}</p>
         </div>
       </>
     )

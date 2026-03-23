@@ -9,6 +9,7 @@ export const STRINGS = {
 
     'app.title': 'FloWord',
     'app.loading': 'Loading…',
+    'app.joiningRoom': 'Joining room…',
     'app.connectingRoom': 'Connecting to room…',
     'app.waitingRoom': 'Waiting for room…',
     'app.roomBadge': 'Room {code}',
@@ -149,6 +150,7 @@ export const STRINGS = {
 
     'app.title': 'FloWord',
     'app.loading': 'טוען…',
+    'app.joiningRoom': 'מצטרפים לחדר…',
     'app.connectingRoom': 'מתחברים לחדר…',
     'app.waitingRoom': 'ממתינים לחדר…',
     'app.roomBadge': 'חדר {code}',
